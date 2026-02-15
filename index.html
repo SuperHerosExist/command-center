@@ -1,554 +1,740 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Center | DC × Kevin</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COMMAND CENTER // SuperHerosExist</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--neon:#00ff41;--neon2:#00d4ff;--neon3:#ff006e;--neon4:#ffbe0b;
+--bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a2e;--border:#1e1e3a;
+--text:#c0c0d0;--dim:#555580;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+/* BOOT SCREEN */
+#boot-screen{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;justify-content:center;padding:40px;font-size:14px;color:var(--neon);overflow:hidden;transition:opacity .8s}
+#boot-screen.fade{opacity:0;pointer-events:none}
+#boot-lines{white-space:pre-wrap;line-height:1.6;max-height:90vh;overflow:hidden}
+#boot-lines .ok{color:var(--neon)}
+#boot-lines .warn{color:var(--neon4)}
+#boot-lines .fail{color:var(--neon3)}
+#boot-lines .info{color:var(--neon2)}
 
-        :root {
-            --bg: #0a0a0f;
-            --surface: #12121a;
-            --surface2: #1a1a28;
-            --border: #2a2a3d;
-            --text: #e4e4ef;
-            --text-dim: #8888a0;
-            --accent: #6c5ce7;
-            --accent-glow: rgba(108, 92, 231, 0.3);
-            --green: #00d26a;
-            --orange: #f39c12;
-            --red: #e74c3c;
-            --blue: #3498db;
-        }
+/* SCANLINES */
+#scanlines{position:fixed;inset:0;z-index:9998;pointer-events:none;
+background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px)}
 
-        body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+/* MATRIX CANVAS */
+#matrix-bg{position:fixed;inset:0;z-index:0;opacity:.15}
 
-        /* Animated background */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: 
-                radial-gradient(ellipse at 20% 50%, rgba(108, 92, 231, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(0, 210, 106, 0.05) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 80%, rgba(52, 152, 219, 0.05) 0%, transparent 50%);
-            z-index: 0;
-            animation: bgPulse 8s ease-in-out infinite alternate;
-        }
+/* MAIN APP */
+#app{display:none;position:relative;z-index:1;height:100vh;overflow:hidden}
+#app.visible{display:grid;grid-template-rows:auto 1fr auto;grid-template-columns:1fr 1fr;gap:0}
 
-        @keyframes bgPulse {
-            0% { opacity: 0.6; }
-            100% { opacity: 1; }
-        }
+/* HEADER */
+header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;
+border-bottom:1px solid var(--border);background:rgba(10,10,15,.95)}
+header h1{font-family:'Orbitron',sans-serif;font-size:clamp(12px,2vw,18px);font-weight:900;
+background:linear-gradient(90deg,var(--neon),var(--neon2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+letter-spacing:3px;text-transform:uppercase}
+.header-right{display:flex;gap:15px;align-items:center;font-size:11px}
+.header-right .status-dot{width:8px;height:8px;border-radius:50%;background:var(--neon);display:inline-block;
+animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{box-shadow:0 0 4px var(--neon)}50%{box-shadow:0 0 12px var(--neon),0 0 20px var(--neon)}}
+#clock{color:var(--neon2);font-variant-numeric:tabular-nums}
+#sound-toggle{cursor:pointer;padding:3px 8px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--dim);font-size:11px;font-family:inherit}
+#sound-toggle.active{color:var(--neon4);border-color:var(--neon4)}
 
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
+/* LEFT PANEL */
+.left-panel{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border)}
+.panel-section{border-bottom:1px solid var(--border);padding:12px 16px}
+.panel-title{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;color:var(--neon2);text-transform:uppercase;margin-bottom:10px;
+display:flex;align-items:center;gap:8px}
+.panel-title::before{content:'▸';color:var(--neon3)}
 
-        /* Header */
-        .header {
-            text-align: center;
-            margin-bottom: 3rem;
-            padding: 2rem 0;
-        }
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;position:relative;overflow:hidden}
+.metric-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+background:linear-gradient(90deg,transparent,var(--neon),transparent);animation:scan-line 3s infinite}
+@keyframes scan-line{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.metric-label{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.metric-value{font-size:22px;font-weight:700;color:var(--neon);margin:4px 0}
+.metric-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:4px}
+.metric-bar-fill{height:100%;border-radius:2px;transition:width 1s ease}
+.metric-bar-fill.green{background:linear-gradient(90deg,#00ff41,#00d4ff)}
+.metric-bar-fill.pink{background:linear-gradient(90deg,#ff006e,#ffbe0b)}
+.metric-bar-fill.blue{background:linear-gradient(90deg,#00d4ff,#7b2ff7)}
+.metric-bar-fill.yellow{background:linear-gradient(90deg,#ffbe0b,#ff006e)}
 
-        .header-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 100px;
-            padding: 0.4rem 1rem;
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            margin-bottom: 1.5rem;
-            font-family: 'JetBrains Mono', monospace;
-        }
+/* PROJECT CARDS */
+.projects-scroll{flex:1;overflow-y:auto;padding:0 16px 12px}
+.projects-scroll::-webkit-scrollbar{width:4px}
+.projects-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.project-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;
+cursor:pointer;transition:all .3s;position:relative}
+.project-card:hover{border-color:var(--neon2);transform:translateX(4px);box-shadow:0 0 20px rgba(0,212,255,.1)}
+.project-card h3{font-size:13px;color:var(--neon);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.project-card h3::before{content:'◆';font-size:8px;color:var(--neon3)}
+.project-card .desc{font-size:11px;color:var(--dim);margin-bottom:8px}
+.project-card .stats{display:flex;gap:12px;font-size:10px;color:var(--text)}
+.project-card .stats span{display:flex;align-items:center;gap:4px}
+.project-card .lang-bar{height:3px;border-radius:2px;margin-top:8px;display:flex;gap:1px;overflow:hidden}
+.lang-bar-seg{height:100%;border-radius:1px;min-width:3px}
 
-        .status-dot {
-            width: 8px; height: 8px;
-            background: var(--green);
-            border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
-        }
+/* RIGHT PANEL */
+.right-panel{display:flex;flex-direction:column;overflow:hidden}
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 210, 106, 0.4); }
-            50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(0, 210, 106, 0); }
-        }
+/* ACTIVITY FEED */
+.activity-feed{flex:0 0 auto;max-height:35%;overflow-y:auto;padding:0 16px 8px;border-bottom:1px solid var(--border)}
+.activity-feed::-webkit-scrollbar{width:4px}
+.activity-feed::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.feed-item{padding:6px 0;border-bottom:1px solid rgba(30,30,58,.5);font-size:11px;display:flex;gap:8px;align-items:flex-start}
+.feed-item .time{color:var(--dim);white-space:nowrap;flex-shrink:0;font-size:10px}
+.feed-item .repo{color:var(--neon2)}
+.feed-item .msg{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.feed-item .commit-hash{color:var(--neon3);font-size:10px}
 
-        .header h1 {
-            font-size: 3rem;
-            font-weight: 900;
-            letter-spacing: -0.03em;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+/* TERMINAL */
+.terminal-wrap{flex:1;display:flex;flex-direction:column;background:rgba(5,5,10,.9);overflow:hidden}
+.terminal-header{padding:8px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.terminal-header .dots{display:flex;gap:5px}
+.terminal-header .dot{width:10px;height:10px;border-radius:50%}
+.terminal-header .dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+.terminal-header span{font-size:11px;color:var(--dim);margin-left:8px}
+.terminal-body{flex:1;overflow-y:auto;padding:12px 16px;font-size:13px;line-height:1.7}
+.terminal-body::-webkit-scrollbar{width:4px}
+.terminal-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.terminal-body .line{white-space:pre-wrap;word-break:break-all}
+.terminal-body .line.cmd{color:var(--neon)}
+.terminal-body .line.out{color:var(--text)}
+.terminal-body .line.err{color:var(--neon3)}
+.terminal-body .line.info{color:var(--neon2)}
+.terminal-body .line.warn{color:var(--neon4)}
+.terminal-body .line.ascii{color:var(--neon);line-height:1.15;font-size:10px}
+.input-line{display:flex;align-items:center;padding:8px 16px;border-top:1px solid var(--border);background:rgba(5,5,10,.95)}
+.prompt{color:var(--neon);margin-right:8px;white-space:nowrap;font-size:13px}
+.input-line input{flex:1;background:transparent;border:none;color:var(--neon);font-family:inherit;font-size:13px;outline:none;caret-color:var(--neon)}
 
-        .header p {
-            color: var(--text-dim);
-            font-size: 1.1rem;
-            font-weight: 300;
-        }
+/* FOOTER */
+footer{grid-column:1/-1;padding:6px 20px;border-top:1px solid var(--border);background:rgba(10,10,15,.95);
+display:flex;justify-content:space-between;font-size:10px;color:var(--dim)}
+footer .loc{color:var(--neon3)}
 
-        .header .tagline {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: var(--accent);
-            margin-top: 0.75rem;
-            opacity: 0.8;
-        }
+/* NETWORK GRAPH */
+.network-graph{height:60px;position:relative;margin-top:8px}
+.network-graph canvas{width:100%;height:100%;border-radius:4px;background:rgba(0,0,0,.3)}
 
-        /* Stats bar */
-        .stats-bar {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2.5rem;
-        }
+/* LANG COLORS */
+.lang-ts{background:#3178c6}.lang-js{background:#f1e05a}.lang-html{background:#e34c26}.lang-css{background:#563d7c}
+.lang-py{background:#3572A5}.lang-other{background:#555}
 
-        .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.25rem;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
+/* MOBILE */
+@media(max-width:768px){
+#app.visible{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+.left-panel{display:none}
+.right-panel{grid-column:1}
+header h1{font-size:11px;letter-spacing:1px}
+.header-right{gap:8px}
+}
+@media(min-width:769px) and (max-width:1200px){
+.metrics-grid{grid-template-columns:1fr}
+}
 
-        .stat-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        }
+/* GLOW EFFECTS */
+.glow{text-shadow:0 0 10px var(--neon),0 0 20px var(--neon)}
+.glow2{text-shadow:0 0 10px var(--neon2),0 0 20px var(--neon2)}
 
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
-        }
+/* TYPING CURSOR */
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+.cursor{display:inline-block;width:8px;height:14px;background:var(--neon);animation:blink 1s infinite;vertical-align:middle;margin-left:2px}
 
-        .stat-label {
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-top: 0.25rem;
-        }
-
-        /* Section */
-        .section-title {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: var(--text-dim);
-            margin-bottom: 1rem;
-            padding-left: 0.5rem;
-            border-left: 3px solid var(--accent);
-        }
-
-        /* Project Grid */
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 1rem;
-            margin-bottom: 3rem;
-        }
-
-        .project-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .project-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: var(--accent);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .project-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px var(--accent-glow);
-        }
-
-        .project-card:hover::before { opacity: 1; }
-
-        .project-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 0.75rem;
-        }
-
-        .project-icon {
-            font-size: 1.5rem;
-            width: 42px; height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--surface2);
-            border-radius: 10px;
-        }
-
-        .project-status {
-            font-size: 0.7rem;
-            font-family: 'JetBrains Mono', monospace;
-            padding: 0.2rem 0.6rem;
-            border-radius: 100px;
-            font-weight: 500;
-        }
-
-        .status-active { background: rgba(0, 210, 106, 0.15); color: var(--green); }
-        .status-pilot { background: rgba(243, 156, 18, 0.15); color: var(--orange); }
-        .status-live { background: rgba(52, 152, 219, 0.15); color: var(--blue); }
-
-        .project-name {
-            font-size: 1.15rem;
-            font-weight: 600;
-            margin-bottom: 0.4rem;
-        }
-
-        .project-desc {
-            font-size: 0.85rem;
-            color: var(--text-dim);
-            line-height: 1.5;
-            flex-grow: 1;
-        }
-
-        .project-tech {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
-            margin-top: 1rem;
-        }
-
-        .tech-tag {
-            font-size: 0.7rem;
-            font-family: 'JetBrains Mono', monospace;
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            padding: 0.2rem 0.5rem;
-            border-radius: 6px;
-            color: var(--text-dim);
-        }
-
-        .project-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1rem;
-            padding-top: 0.75rem;
-            border-top: 1px solid var(--border);
-            font-size: 0.75rem;
-            color: var(--text-dim);
-        }
-
-        /* Stack section */
-        .stack-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 3rem;
-        }
-
-        .stack-category {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.25rem;
-        }
-
-        .stack-category h3 {
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .stack-items {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
-        }
-
-        .stack-item {
-            font-size: 0.75rem;
-            font-family: 'JetBrains Mono', monospace;
-            background: var(--surface2);
-            padding: 0.3rem 0.65rem;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 2rem 0;
-            color: var(--text-dim);
-            font-size: 0.8rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .footer .bernie {
-            font-style: italic;
-            margin-top: 0.5rem;
-            color: var(--accent);
-            opacity: 0.7;
-        }
-
-        /* Clock */
-        .clock {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: var(--text-dim);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header h1 { font-size: 2rem; }
-            .projects-grid { grid-template-columns: 1fr; }
-            .stats-bar { grid-template-columns: repeat(2, 1fr); }
-        }
-    </style>
+/* FLICKER */
+@keyframes flicker{0%,97%{opacity:1}98%{opacity:.7}99%{opacity:1}100%{opacity:.95}}
+.flicker{animation:flicker 4s infinite}
+</style>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <div class="header-badge">
-                <span class="status-dot"></span>
-                <span>KEVIN v1.0 — ONLINE</span>
-            </div>
-            <h1>Command Center</h1>
-            <p>DC × Kevin — Springfield, MO</p>
-            <div class="tagline">"I ain't scared of none of y'all"</div>
-        </header>
 
-        <div class="stats-bar">
-            <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent);">15</div>
-                <div class="stat-label">Repositories</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" style="color: var(--green);">4</div>
-                <div class="stat-label">Active Projects</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" style="color: var(--orange);">189</div>
-                <div class="stat-label">Bowlers Tracked</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" style="color: var(--blue);" id="uptime">1</div>
-                <div class="stat-label">Days Since Boot</div>
-            </div>
-        </div>
+<!-- BOOT SCREEN -->
+<div id="boot-screen"><div id="boot-lines"></div></div>
 
-        <div class="section-title">Active Projects</div>
-        <div class="projects-grid">
-            <a class="project-card" href="https://github.com/SuperHerosExist/bowling-intelligence" target="_blank">
-                <div class="project-header">
-                    <div class="project-icon">🎳</div>
-                    <span class="project-status status-pilot">PILOT</span>
-                </div>
-                <div class="project-name">Bowling Intelligence</div>
-                <div class="project-desc">B2B data platform for bowling centers. Automated stat ingestion, leaderboards, and analytics. Springfield/Nixa pilot live.</div>
-                <div class="project-tech">
-                    <span class="tech-tag">Next.js</span>
-                    <span class="tech-tag">Express</span>
-                    <span class="tech-tag">Supabase</span>
-                    <span class="tech-tag">BigQuery</span>
-                    <span class="tech-tag">Cloud Run</span>
-                </div>
-                <div class="project-meta">
-                    <span>189 bowlers · 2,329 scores · 5 leagues</span>
-                    <span>$100-500/mo</span>
-                </div>
-            </a>
+<!-- SCANLINES -->
+<div id="scanlines"></div>
 
-            <a class="project-card" href="https://github.com/SuperHerosExist/Guardian" target="_blank">
-                <div class="project-header">
-                    <div class="project-icon">🌿</div>
-                    <span class="project-status status-live">LIVE</span>
-                </div>
-                <div class="project-name">Guardian</div>
-                <div class="project-desc">QR membership system for The Treehouse Lounge. Digital membership cards, scanner check-in, liability forms, and event ticketing.</div>
-                <div class="project-tech">
-                    <span class="tech-tag">Next.js</span>
-                    <span class="tech-tag">Firebase</span>
-                    <span class="tech-tag">Zustand</span>
-                    <span class="tech-tag">JWT</span>
-                </div>
-                <div class="project-meta">
-                    <span>Cannabis lounge · Springfield, MO</span>
-                    <span>3 tiers</span>
-                </div>
-            </a>
+<!-- MATRIX BG -->
+<canvas id="matrix-bg"></canvas>
 
-            <a class="project-card" href="https://github.com/SuperHerosExist/coachesCorner" target="_blank">
-                <div class="project-header">
-                    <div class="project-icon">🧠</div>
-                    <span class="project-status status-active">ACTIVE</span>
-                </div>
-                <div class="project-name">Coaches Corner</div>
-                <div class="project-desc">AI-powered post generator for bowling coaches. Creates engaging tips, drills, and motivational content using Google Gemini.</div>
-                <div class="project-tech">
-                    <span class="tech-tag">Vite</span>
-                    <span class="tech-tag">React</span>
-                    <span class="tech-tag">Gemini AI</span>
-                    <span class="tech-tag">Firebase</span>
-                </div>
-                <div class="project-meta">
-                    <span>9 post types · USBC resources</span>
-                    <span>AI-powered</span>
-                </div>
-            </a>
-
-            <a class="project-card" href="https://github.com/SuperHerosExist/core-stats" target="_blank">
-                <div class="project-header">
-                    <div class="project-icon">🏆</div>
-                    <span class="project-status status-active">ACTIVE</span>
-                </div>
-                <div class="project-name">Core Stats</div>
-                <div class="project-desc">Fantasy bowling league platform. Draft real bowlers, compete weekly using live LeagueSecretary data. Full draft system and scoring.</div>
-                <div class="project-tech">
-                    <span class="tech-tag">Vite</span>
-                    <span class="tech-tag">Express</span>
-                    <span class="tech-tag">Supabase</span>
-                    <span class="tech-tag">Socket.io</span>
-                </div>
-                <div class="project-meta">
-                    <span>Fantasy league · Live scoring</span>
-                    <span>by David Collins</span>
-                </div>
-            </a>
-        </div>
-
-        <div class="section-title">Tech Stack</div>
-        <div class="stack-grid">
-            <div class="stack-category">
-                <h3>⚡ Core</h3>
-                <div class="stack-items">
-                    <span class="stack-item">TypeScript</span>
-                    <span class="stack-item">React</span>
-                    <span class="stack-item">Next.js</span>
-                    <span class="stack-item">Vite</span>
-                    <span class="stack-item">Express</span>
-                    <span class="stack-item">Node.js</span>
-                </div>
-            </div>
-            <div class="stack-category">
-                <h3>☁️ Cloud</h3>
-                <div class="stack-items">
-                    <span class="stack-item">GCP</span>
-                    <span class="stack-item">Cloud Run</span>
-                    <span class="stack-item">BigQuery</span>
-                    <span class="stack-item">Firebase</span>
-                    <span class="stack-item">Supabase</span>
-                </div>
-            </div>
-            <div class="stack-category">
-                <h3>🎨 Frontend</h3>
-                <div class="stack-items">
-                    <span class="stack-item">Tailwind CSS</span>
-                    <span class="stack-item">Recharts</span>
-                    <span class="stack-item">Framer Motion</span>
-                    <span class="stack-item">Radix UI</span>
-                    <span class="stack-item">Zustand</span>
-                </div>
-            </div>
-            <div class="stack-category">
-                <h3>🤖 AI</h3>
-                <div class="stack-items">
-                    <span class="stack-item">Google Gemini</span>
-                    <span class="stack-item">OpenClaw (Kevin)</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="section-title">All Repos</div>
-        <div class="stack-grid" style="margin-bottom: 2rem;">
-            <div class="stack-category">
-                <h3>🎳 Bowling Ecosystem</h3>
-                <div class="stack-items">
-                    <span class="stack-item">bowling-intelligence</span>
-                    <span class="stack-item">core-stats</span>
-                    <span class="stack-item">coachesCorner</span>
-                    <span class="stack-item">fantasyBowling</span>
-                    <span class="stack-item">Brackets</span>
-                    <span class="stack-item">Bracket-Generator</span>
-                    <span class="stack-item">Skills</span>
-                    <span class="stack-item">Stats</span>
-                    <span class="stack-item">BowlingwithFriends</span>
-                    <span class="stack-item">whs</span>
-                </div>
-            </div>
-            <div class="stack-category">
-                <h3>🛠️ Other Projects</h3>
-                <div class="stack-items">
-                    <span class="stack-item">Guardian</span>
-                    <span class="stack-item">Remix</span>
-                    <span class="stack-item">arbitrage</span>
-                    <span class="stack-item">ris</span>
-                    <span class="stack-item">apiScanner</span>
-                    <span class="stack-item">command-center</span>
-                </div>
-            </div>
-        </div>
-
-        <footer class="footer">
-            <div>Command Center v1.0 · Built by Kevin 🫡 · <span class="clock" id="clock"></span></div>
-            <div class="bernie">"I ain't scared of none of y'all" — Kevin (via Bernie Mac)</div>
-        </footer>
+<!-- MAIN APP -->
+<div id="app">
+  <header>
+    <h1 class="flicker">⟨ COMMAND CENTER ⟩</h1>
+    <div class="header-right">
+      <span><span class="status-dot"></span> SYSTEMS ONLINE</span>
+      <span id="clock">--:--:--</span>
+      <span id="uptime-display">UP 0:00:00</span>
+      <button id="sound-toggle" onclick="toggleSound()">🔇 SFX</button>
     </div>
+  </header>
 
-    <script>
-        // Live clock
-        function updateClock() {
-            const now = new Date();
-            const opts = { timeZone: 'America/Chicago', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-            document.getElementById('clock').textContent = now.toLocaleString('en-US', opts) + ' CST';
-        }
-        updateClock();
-        setInterval(updateClock, 1000);
+  <!-- LEFT -->
+  <div class="left-panel">
+    <div class="panel-section">
+      <div class="panel-title">System Metrics</div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Commit Velocity</div>
+          <div class="metric-value" id="m-commits">--</div>
+          <div class="metric-bar"><div class="metric-bar-fill green" id="bar-commits" style="width:0%"></div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Active Repos</div>
+          <div class="metric-value" id="m-repos">--</div>
+          <div class="metric-bar"><div class="metric-bar-fill blue" id="bar-repos" style="width:0%"></div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Stars</div>
+          <div class="metric-value" id="m-stars">--</div>
+          <div class="metric-bar"><div class="metric-bar-fill pink" id="bar-stars" style="width:0%"></div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Network I/O</div>
+          <div class="metric-value" id="m-network">0 kb/s</div>
+          <div class="metric-bar"><div class="metric-bar-fill yellow" id="bar-network" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="network-graph"><canvas id="net-canvas"></canvas></div>
+    </div>
+    <div class="panel-section" style="flex:0 0 auto">
+      <div class="panel-title">Active Projects</div>
+    </div>
+    <div class="projects-scroll" id="projects-container">
+      <div style="color:var(--dim);font-size:11px;padding:8px">Loading project data...</div>
+    </div>
+  </div>
 
-        // Days since boot (Feb 13, 2026)
-        const bootDate = new Date('2026-02-13T00:00:00-06:00');
-        const today = new Date();
-        const days = Math.floor((today - bootDate) / (1000 * 60 * 60 * 24));
-        document.getElementById('uptime').textContent = Math.max(1, days);
-    </script>
+  <!-- RIGHT -->
+  <div class="right-panel">
+    <div class="panel-section" style="flex:0 0 auto">
+      <div class="panel-title">Activity Feed</div>
+    </div>
+    <div class="activity-feed" id="activity-feed">
+      <div style="color:var(--dim);font-size:11px;padding:8px">Fetching commit data...</div>
+    </div>
+    <div class="terminal-wrap">
+      <div class="terminal-header">
+        <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span>kevin@command-center ~ $</span>
+      </div>
+      <div class="terminal-body" id="terminal-body">
+        <div class="line info">Welcome to Command Center v2.0</div>
+        <div class="line out">Type <span style="color:var(--neon)">help</span> for available commands.</div>
+        <div class="line out">&nbsp;</div>
+      </div>
+      <div class="input-line">
+        <span class="prompt">❯</span>
+        <input type="text" id="cmd-input" autocomplete="off" spellcheck="false" placeholder="type a command...">
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>KEVIN v2.0 // AI OPS ASSISTANT</span>
+    <span class="loc">📍 Springfield, MO // CST</span>
+    <span id="footer-status">Initializing...</span>
+  </footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// GLOBALS
+// ═══════════════════════════════════════
+const GH_USER = 'SuperHerosExist';
+const FEATURED = ['bowling-intelligence','Guardian','coachesCorner','core-stats'];
+const BOOT_START = Date.now();
+let soundEnabled = false;
+let ghData = { repos: [], events: [], user: null };
+const LANG_COLORS = {TypeScript:'#3178c6',JavaScript:'#f1e05a',HTML:'#e34c26',CSS:'#563d7c',Python:'#3572A5'};
+
+// ═══════════════════════════════════════
+// AUDIO CONTEXT (lazy)
+// ═══════════════════════════════════════
+let audioCtx = null;
+function beep(freq=800,dur=30,vol=.04){
+  if(!soundEnabled)return;
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.frequency.value=freq;o.type='square';g.gain.value=vol;
+  o.start();g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur/1000);
+  o.stop(audioCtx.currentTime+dur/1000);
+}
+function toggleSound(){
+  soundEnabled=!soundEnabled;
+  const btn=document.getElementById('sound-toggle');
+  btn.textContent=soundEnabled?'🔊 SFX':'🔇 SFX';
+  btn.classList.toggle('active',soundEnabled);
+  if(soundEnabled)beep(1200,50,.06);
+}
+
+// ═══════════════════════════════════════
+// BOOT SEQUENCE
+// ═══════════════════════════════════════
+const bootMessages = [
+  {t:'[BIOS] Command Center POST...', c:'info', d:80},
+  {t:'[BIOS] Memory check: 16384 MB OK', c:'ok', d:60},
+  {t:'[KERN] Loading kernel modules...', c:'info', d:100},
+  {t:'[KERN] Module: net_ops .......... [  OK  ]', c:'ok', d:70},
+  {t:'[KERN] Module: gh_api ........... [  OK  ]', c:'ok', d:70},
+  {t:'[KERN] Module: matrix_rain ...... [  OK  ]', c:'ok', d:70},
+  {t:'[KERN] Module: terminal_v2 ...... [  OK  ]', c:'ok', d:70},
+  {t:'[KERN] Module: project_scan ..... [  OK  ]', c:'ok', d:50},
+  {t:'[KERN] Module: kevin_ai ......... [  OK  ]', c:'ok', d:50},
+  {t:'[INIT] Establishing GitHub connection...', c:'info', d:200},
+  {t:'[INIT] User: SuperHerosExist .... [FOUND ]', c:'ok', d:100},
+  {t:'[INIT] Scanning repositories.....', c:'info', d:150},
+  {t:'[INIT] → bowling-intelligence ... [ONLINE]', c:'ok', d:80},
+  {t:'[INIT] → Guardian ............... [ONLINE]', c:'ok', d:80},
+  {t:'[INIT] → coachesCorner .......... [ONLINE]', c:'ok', d:80},
+  {t:'[INIT] → core-stats ............. [ONLINE]', c:'ok', d:80},
+  {t:'[NET ] Uplink to GitHub API: 200 OK', c:'ok', d:100},
+  {t:'[SEC ] Firewall rules loaded: 47 active', c:'info', d:60},
+  {t:'[SEC ] Encryption: AES-256-GCM active', c:'ok', d:60},
+  {t:'[SYS ] Location: Springfield, MO (CST)', c:'info', d:80},
+  {t:'[SYS ] Operator: DC', c:'info', d:60},
+  {t:'[SYS ] AI Assistant: Kevin v2.0', c:'info', d:60},
+  {t:'', c:'ok', d:30},
+  {t:'╔══════════════════════════════════════════╗', c:'ok', d:40},
+  {t:'║   COMMAND CENTER v2.0 — ALL SYSTEMS GO   ║', c:'ok', d:40},
+  {t:'╚══════════════════════════════════════════╝', c:'ok', d:40},
+  {t:'', c:'ok', d:200},
+];
+
+async function runBoot(){
+  const el = document.getElementById('boot-lines');
+  for(const msg of bootMessages){
+    const line = document.createElement('div');
+    line.className = msg.c;
+    line.textContent = msg.t;
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+    await sleep(msg.d);
+  }
+  await sleep(400);
+  document.getElementById('boot-screen').classList.add('fade');
+  await sleep(800);
+  document.getElementById('boot-screen').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('cmd-input').focus();
+  startSystems();
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// ═══════════════════════════════════════
+// MATRIX RAIN
+// ═══════════════════════════════════════
+function initMatrix(){
+  const c=document.getElementById('matrix-bg'),ctx=c.getContext('2d');
+  let w,h,cols,drops;
+  function resize(){
+    w=c.width=window.innerWidth;h=c.height=window.innerHeight;
+    cols=Math.floor(w/16);drops=Array(cols).fill(1);
+  }
+  resize();window.addEventListener('resize',resize);
+  const chars='アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>{}[]|/\\';
+  function draw(){
+    ctx.fillStyle='rgba(10,10,15,.06)';ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='#00ff4120';ctx.font='14px monospace';
+    for(let i=0;i<cols;i++){
+      const t=chars[Math.floor(Math.random()*chars.length)];
+      ctx.fillText(t,i*16,drops[i]*16);
+      if(drops[i]*16>h&&Math.random()>.975)drops[i]=0;
+      drops[i]++;
+    }
+  }
+  setInterval(draw,50);
+}
+
+// ═══════════════════════════════════════
+// NETWORK GRAPH
+// ═══════════════════════════════════════
+let netData = [];
+function initNetGraph(){
+  const c=document.getElementById('net-canvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  for(let i=0;i<80;i++)netData.push(Math.random()*20);
+  function draw(){
+    const W=c.width=c.offsetWidth, H=c.height=c.offsetHeight;
+    ctx.clearRect(0,0,W,H);
+    // grid
+    ctx.strokeStyle='rgba(0,212,255,.1)';ctx.lineWidth=.5;
+    for(let y=0;y<H;y+=15){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    // line
+    ctx.beginPath();ctx.strokeStyle='#00d4ff';ctx.lineWidth=1.5;
+    const step=W/(netData.length-1);
+    netData.forEach((v,i)=>{
+      const x=i*step, y=H-((v/100)*H);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    // fill
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
+    const grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'rgba(0,212,255,.2)');grad.addColorStop(1,'rgba(0,212,255,0)');
+    ctx.fillStyle=grad;ctx.fill();
+  }
+  setInterval(()=>{
+    netData.shift();
+    const last=netData[netData.length-1];
+    netData.push(Math.max(5,Math.min(95,last+(Math.random()-.5)*30)));
+    draw();
+    const v=netData[netData.length-1];
+    document.getElementById('m-network').textContent=Math.round(v*12)+' kb/s';
+    document.getElementById('bar-network').style.width=v+'%';
+  },500);
+  draw();
+}
+
+// ═══════════════════════════════════════
+// CLOCK & UPTIME
+// ═══════════════════════════════════════
+function startClock(){
+  setInterval(()=>{
+    const now=new Date().toLocaleString('en-US',{timeZone:'America/Chicago',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+    document.getElementById('clock').textContent=now;
+    const up=Math.floor((Date.now()-BOOT_START)/1000);
+    const h=Math.floor(up/3600),m=Math.floor((up%3600)/60),s=up%60;
+    document.getElementById('uptime-display').textContent=`UP ${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  },1000);
+}
+
+// ═══════════════════════════════════════
+// GITHUB DATA
+// ═══════════════════════════════════════
+async function fetchGH(){
+  try{
+    const [reposRes, eventsRes] = await Promise.all([
+      fetch(`https://api.github.com/users/${GH_USER}/repos?per_page=100&sort=updated`),
+      fetch(`https://api.github.com/users/${GH_USER}/events/public?per_page=50`)
+    ]);
+    ghData.repos = await reposRes.json();
+    ghData.events = await eventsRes.json();
+    if(!Array.isArray(ghData.repos))ghData.repos=[];
+    if(!Array.isArray(ghData.events))ghData.events=[];
+    renderProjects();
+    renderActivity();
+    updateMetrics();
+    document.getElementById('footer-status').textContent=`${ghData.repos.length} repos loaded // ${ghData.events.length} events`;
+  }catch(e){
+    document.getElementById('footer-status').textContent='GitHub API error: '+e.message;
+  }
+}
+
+function renderProjects(){
+  const el=document.getElementById('projects-container');
+  const featured=FEATURED.map(n=>ghData.repos.find(r=>r.name===n)).filter(Boolean);
+  const rest=ghData.repos.filter(r=>!FEATURED.includes(r.name)).slice(0,6);
+  el.innerHTML='';
+  [...featured,...rest].forEach(repo=>{
+    const isFeatured=FEATURED.includes(repo.name);
+    const card=document.createElement('div');
+    card.className='project-card';
+    if(isFeatured)card.style.borderLeftColor='var(--neon3)';card.style.borderLeftWidth='2px';
+    const langs=repo.language?`<span class="lang-bar"><span class="lang-bar-seg" style="background:${LANG_COLORS[repo.language]||'#555'};width:100%"></span></span>`:'';
+    card.innerHTML=`
+      <h3>${repo.name}${isFeatured?' <span style="font-size:9px;color:var(--neon3)">[FEATURED]</span>':''}</h3>
+      <div class="desc">${repo.description||'No description'}</div>
+      <div class="stats">
+        <span>⭐ ${repo.stargazers_count}</span>
+        <span>🔀 ${repo.forks_count}</span>
+        <span>📦 ${repo.size} KB</span>
+        <span style="color:${LANG_COLORS[repo.language]||'#888'}">${repo.language||'—'}</span>
+      </div>
+      ${langs}
+    `;
+    card.onclick=()=>window.open(repo.html_url,'_blank');
+    el.appendChild(card);
+  });
+}
+
+function renderActivity(){
+  const el=document.getElementById('activity-feed');
+  const pushEvents=ghData.events.filter(e=>e.type==='PushEvent').slice(0,20);
+  if(!pushEvents.length){el.innerHTML='<div style="color:var(--dim);font-size:11px;padding:8px">No recent push events</div>';return;}
+  el.innerHTML='';
+  pushEvents.forEach(ev=>{
+    const repo=ev.repo.name.replace(GH_USER+'/','');
+    const commits=ev.payload.commits||[];
+    commits.forEach(c=>{
+      const d=new Date(ev.created_at);
+      const time=d.toLocaleString('en-US',{timeZone:'America/Chicago',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+      const item=document.createElement('div');
+      item.className='feed-item';
+      item.innerHTML=`
+        <span class="time">${time}</span>
+        <span class="commit-hash">${c.sha.slice(0,7)}</span>
+        <span class="repo">${repo}</span>
+        <span class="msg">${c.message.split('\n')[0]}</span>
+      `;
+      el.appendChild(item);
+    });
+  });
+}
+
+function updateMetrics(){
+  const totalStars=ghData.repos.reduce((a,r)=>a+r.stargazers_count,0);
+  const totalRepos=ghData.repos.length;
+  const pushEvents=ghData.events.filter(e=>e.type==='PushEvent');
+  const totalCommits=pushEvents.reduce((a,e)=>a+(e.payload.commits?.length||0),0);
+  document.getElementById('m-commits').textContent=totalCommits;
+  document.getElementById('m-repos').textContent=totalRepos;
+  document.getElementById('m-stars').textContent=totalStars;
+  document.getElementById('bar-commits').style.width=Math.min(100,totalCommits*2)+'%';
+  document.getElementById('bar-repos').style.width=Math.min(100,totalRepos*3)+'%';
+  document.getElementById('bar-stars').style.width=Math.min(100,totalStars*10)+'%';
+}
+
+// ═══════════════════════════════════════
+// TERMINAL
+// ═══════════════════════════════════════
+const termBody=()=>document.getElementById('terminal-body');
+const cmdInput=()=>document.getElementById('cmd-input');
+
+function addLine(text,cls='out'){
+  const el=document.createElement('div');
+  el.className='line '+cls;
+  el.innerHTML=text;
+  termBody().appendChild(el);
+  termBody().scrollTop=termBody().scrollHeight;
+}
+
+function addLines(lines,cls='out'){lines.forEach(l=>addLine(l,cls))}
+
+const BERNIE_QUOTES = [
+  "I ain't scared of you motherf***ers.",
+  "America... home of the free, land of the brave.",
+  "You gotta go for what you know.",
+  "I'm not a comedian who happens to act. I'm an actor who happens to be funny.",
+  "Don't be sorry! Be QUIET!",
+  "Who you think you kidnapped? Denzel?!",
+];
+
+const COMMANDS = {
+  help: ()=>{
+    addLine('╔═══════════════════════════════════════╗','info');
+    addLine('║       AVAILABLE COMMANDS              ║','info');
+    addLine('╠═══════════════════════════════════════╣','info');
+    addLine('║  status    — system status overview   ║','info');
+    addLine('║  repos     — list all repositories    ║','info');
+    addLine('║  kevin     — about the AI assistant   ║','info');
+    addLine('║  uptime    — system uptime            ║','info');
+    addLine('║  whoami    — current operator info    ║','info');
+    addLine('║  projects  — featured project details ║','info');
+    addLine('║  stats     — GitHub statistics        ║','info');
+    addLine('║  skills    — DC\'s tech stack          ║','info');
+    addLine('║  time      — current time (CST)       ║','info');
+    addLine('║  refresh   — reload GitHub data       ║','info');
+    addLine('║  clear     — clear terminal           ║','info');
+    addLine('║  about     — about this page          ║','info');
+    addLine('╚═══════════════════════════════════════╝','info');
+  },
+  status: ()=>{
+    const up=Math.floor((Date.now()-BOOT_START)/1000);
+    addLine('┌─── SYSTEM STATUS ───────────────────┐','info');
+    addLine(`│ Uptime:      ${up}s`,'info');
+    addLine(`│ Repos:       ${ghData.repos.length} loaded`,'info');
+    addLine(`│ Events:      ${ghData.events.length} tracked`,'info');
+    addLine(`│ API Status:  ● CONNECTED`,'cmd');
+    addLine(`│ Terminal:    ● ACTIVE`,'cmd');
+    addLine(`│ Matrix Rain: ● RUNNING`,'cmd');
+    addLine('└─────────────────────────────────────┘','info');
+  },
+  repos: ()=>{
+    if(!ghData.repos.length){addLine('No repos loaded yet.','warn');return;}
+    addLine(`Found ${ghData.repos.length} repositories:`,'info');
+    ghData.repos.forEach(r=>{
+      const star=r.stargazers_count?` ⭐${r.stargazers_count}`:'';
+      const lang=r.language?` [${r.language}]`:'';
+      const featured=FEATURED.includes(r.name)?' ◆':'';
+      addLine(`  ${featured?'<span style="color:var(--neon3)">◆</span> ':'  '}${r.name}${lang}${star}`);
+    });
+  },
+  kevin: ()=>{
+    addLine('','out');
+    addLine('  ╔═══════════════════════════════════╗','info');
+    addLine('  ║        KEVIN v2.0                 ║','info');
+    addLine('  ║   DC\'s AI Operations Assistant    ║','info');
+    addLine('  ╚═══════════════════════════════════╝','info');
+    addLine('','out');
+    addLine('  Runtime:    OpenClaw // Claude Opus','out');
+    addLine('  Home:       Mac mini (Darwin arm64)','out');
+    addLine('  Channel:    iMessage','out');
+    addLine('  Status:     Always watching. Always ready.','cmd');
+    addLine('','out');
+  },
+  uptime: ()=>{
+    const up=Math.floor((Date.now()-BOOT_START)/1000);
+    const h=Math.floor(up/3600),m=Math.floor((up%3600)/60),s=up%60;
+    addLine(`System uptime: ${h}h ${m}m ${s}s`,'info');
+    addLine(`Boot time: ${new Date(BOOT_START).toLocaleString('en-US',{timeZone:'America/Chicago'})}`,'out');
+  },
+  whoami: ()=>{
+    addLine('Operator: DC','info');
+    addLine('GitHub:   SuperHerosExist','out');
+    addLine('Location: Springfield, MO','out');
+    addLine('Timezone: America/Chicago (CST)','out');
+    addLine('Role:     Builder. Operator. Visionary.','cmd');
+  },
+  projects: ()=>{
+    addLine('═══ FEATURED PROJECTS ═══','info');
+    const featured=FEATURED.map(n=>ghData.repos.find(r=>r.name===n)).filter(Boolean);
+    featured.forEach(r=>{
+      addLine('','out');
+      addLine(`◆ <span style="color:var(--neon)">${r.name}</span>`,'out');
+      addLine(`  ${r.description||'No description'}`,'out');
+      addLine(`  ⭐ ${r.stargazers_count}  🔀 ${r.forks_count}  📦 ${r.size}KB  🔤 ${r.language||'—'}`,'out');
+    });
+  },
+  stats: ()=>{
+    const totalStars=ghData.repos.reduce((a,r)=>a+r.stargazers_count,0);
+    const totalForks=ghData.repos.reduce((a,r)=>a+r.forks_count,0);
+    const langs={};
+    ghData.repos.forEach(r=>{if(r.language)langs[r.language]=(langs[r.language]||0)+1;});
+    addLine('═══ GITHUB STATISTICS ═══','info');
+    addLine(`Total Repos:  ${ghData.repos.length}`,'out');
+    addLine(`Total Stars:  ${totalStars}`,'out');
+    addLine(`Total Forks:  ${totalForks}`,'out');
+    addLine(`Languages:    ${Object.entries(langs).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}(${v})`).join(', ')}`,'out');
+  },
+  skills: ()=>{
+    addLine('═══ TECH STACK ═══','info');
+    addLine('Languages:   TypeScript, JavaScript, Python','out');
+    addLine('Frontend:    React, Next.js, Vite, Tailwind','out');
+    addLine('Backend:     Express, Node.js, Firebase','out');
+    addLine('Cloud:       GCP (Cloud Run, BigQuery, Scheduler)','out');
+    addLine('Database:    Supabase (Postgres), Firestore','out');
+    addLine('AI:          Google Gemini, OpenClaw (Claude)','out');
+    addLine('Tools:       Zustand, Recharts, Framer Motion, Zod','out');
+  },
+  time: ()=>{
+    const now=new Date().toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+    addLine(now,'info');
+  },
+  clear: ()=>{termBody().innerHTML='';},
+  refresh: async ()=>{
+    addLine('Refreshing GitHub data...','warn');
+    await fetchGH();
+    addLine('Data refreshed. ✓','cmd');
+  },
+  about: ()=>{
+    addLine('','out');
+    addLine('Command Center v2.0','info');
+    addLine('Built by Kevin (AI) for DC','out');
+    addLine('A cyberpunk ops dashboard with live GitHub data,','out');
+    addLine('interactive terminal, and matrix rain aesthetics.','out');
+    addLine('','out');
+    addLine('Powered by: GitHub API, Canvas, Web Audio, pure CSS chaos','out');
+    addLine('','out');
+  },
+  // EASTER EGGS
+  bernie: ()=>{
+    const q=BERNIE_QUOTES[Math.floor(Math.random()*BERNIE_QUOTES.length)];
+    addLine('','out');
+    addLine('  🎤 BERNIE MAC SAYS:','warn');
+    addLine(`  "${q}"','warn');
+    addLine('','out');
+  },
+  echo: ()=>{
+    addLine('<span style="color:var(--neon3)">echo</span>: retired. wasn\'t useful.','err');
+  },
+  atlas: ()=>{
+    addLine('<span style="color:var(--neon2)">atlas</span>: he\'s busy. managing a team.','info');
+  },
+  sudo: ()=>{
+    addLine('Nice try. Kevin doesn\'t need sudo.','err');
+  },
+  hack: ()=>{
+    addLine('','out');
+    addLine('INITIATING HACK SEQUENCE...','err');
+    addLine('█████████████████████████ 100%','cmd');
+    addLine('Just kidding. We don\'t do that here.','warn');
+    addLine('','out');
+  },
+  matrix: ()=>{
+    addLine('You\'re already in the Matrix.','cmd');
+    addLine('There is no spoon. 🥄','info');
+  },
+  ping: ()=>{
+    addLine('PONG 🏓 (0.42ms)','cmd');
+  },
+  dc: ()=>{
+    addLine('','out');
+    addLine('  DC // SuperHerosExist','info');
+    addLine('  Builder of bowling intelligence systems,','out');
+    addLine('  guardian platforms, and fantasy sports engines.','out');
+    addLine('  Based in Springfield, MO.','out');
+    addLine('  The ops never stop. 🚀','cmd');
+    addLine('','out');
+  },
+};
+
+function handleCommand(raw){
+  const cmd=raw.trim().toLowerCase();
+  if(!cmd)return;
+  addLine(`<span style="color:var(--dim)">❯</span> <span style="color:var(--neon)">${raw}</span>`,'cmd');
+  beep(600,20,.03);
+  if(COMMANDS[cmd]){
+    COMMANDS[cmd]();
+  }else{
+    addLine(`command not found: ${cmd}. Type <span style="color:var(--neon)">help</span> for commands.`,'err');
+  }
+}
+
+// ═══════════════════════════════════════
+// SIMULATED METRICS ANIMATION
+// ═══════════════════════════════════════
+function animateMetrics(){
+  setInterval(()=>{
+    // subtle fluctuation on commit velocity display
+    const cv=document.getElementById('bar-commits');
+    if(cv){
+      const cur=parseFloat(cv.style.width)||50;
+      cv.style.width=Math.max(10,Math.min(100,cur+(Math.random()-.5)*5))+'%';
+    }
+  },3000);
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+function startSystems(){
+  initMatrix();
+  initNetGraph();
+  startClock();
+  fetchGH();
+  animateMetrics();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  runBoot();
+  document.addEventListener('keydown',(e)=>{
+    const input=document.getElementById('cmd-input');
+    if(!input)return;
+    if(document.getElementById('boot-screen').style.display!=='none'&&!document.getElementById('boot-screen').classList.contains('fade'))return;
+    if(e.key==='Enter'){
+      handleCommand(input.value);
+      input.value='';
+    }else{
+      input.focus();
+      beep(400+Math.random()*400,15,.02);
+    }
+  });
+});
+</script>
 </body>
 </html>
