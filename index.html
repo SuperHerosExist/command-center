@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Center | DC × Kevin</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #1a1a28;
+            --border: #2a2a3d;
+            --text: #e4e4ef;
+            --text-dim: #8888a0;
+            --accent: #6c5ce7;
+            --accent-glow: rgba(108, 92, 231, 0.3);
+            --green: #00d26a;
+            --orange: #f39c12;
+            --red: #e74c3c;
+            --blue: #3498db;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(108, 92, 231, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0, 210, 106, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(52, 152, 219, 0.05) 0%, transparent 50%);
+            z-index: 0;
+            animation: bgPulse 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgPulse {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 0.4rem 1rem;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 210, 106, 0.4); }
+            50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(0, 210, 106, 0); }
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .header .tagline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent);
+            margin-top: 0.75rem;
+            opacity: 0.8;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 0.25rem;
+        }
+
+        /* Section */
+        .section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-dim);
+            margin-bottom: 1rem;
+            padding-left: 0.5rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        /* Project Grid */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .project-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--accent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .project-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px var(--accent-glow);
+        }
+
+        .project-card:hover::before { opacity: 1; }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .project-icon {
+            font-size: 1.5rem;
+            width: 42px; height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface2);
+            border-radius: 10px;
+        }
+
+        .project-status {
+            font-size: 0.7rem;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 0.2rem 0.6rem;
+            border-radius: 100px;
+            font-weight: 500;
+        }
+
+        .status-active { background: rgba(0, 210, 106, 0.15); color: var(--green); }
+        .status-pilot { background: rgba(243, 156, 18, 0.15); color: var(--orange); }
+        .status-live { background: rgba(52, 152, 219, 0.15); color: var(--blue); }
+
+        .project-name {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .project-desc {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .project-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 1rem;
+        }
+
+        .tech-tag {
+            font-size: 0.7rem;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            color: var(--text-dim);
+        }
+
+        .project-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        /* Stack section */
+        .stack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .stack-category {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .stack-category h3 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stack-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .stack-item {
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--surface2);
+            padding: 0.3rem 0.65rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer .bernie {
+            font-style: italic;
+            margin-top: 0.5rem;
+            color: var(--accent);
+            opacity: 0.7;
+        }
+
+        /* Clock */
+        .clock {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            .projects-grid { grid-template-columns: 1fr; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-badge">
+                <span class="status-dot"></span>
+                <span>KEVIN v1.0 — ONLINE</span>
+            </div>
+            <h1>Command Center</h1>
+            <p>DC × Kevin — Springfield, MO</p>
+            <div class="tagline">"I ain't scared of none of y'all"</div>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--accent);">15</div>
+                <div class="stat-label">Repositories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--green);">4</div>
+                <div class="stat-label">Active Projects</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--orange);">189</div>
+                <div class="stat-label">Bowlers Tracked</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--blue);" id="uptime">1</div>
+                <div class="stat-label">Days Since Boot</div>
+            </div>
+        </div>
+
+        <div class="section-title">Active Projects</div>
+        <div class="projects-grid">
+            <a class="project-card" href="https://github.com/SuperHerosExist/bowling-intelligence" target="_blank">
+                <div class="project-header">
+                    <div class="project-icon">🎳</div>
+                    <span class="project-status status-pilot">PILOT</span>
+                </div>
+                <div class="project-name">Bowling Intelligence</div>
+                <div class="project-desc">B2B data platform for bowling centers. Automated stat ingestion, leaderboards, and analytics. Springfield/Nixa pilot live.</div>
+                <div class="project-tech">
+                    <span class="tech-tag">Next.js</span>
+                    <span class="tech-tag">Express</span>
+                    <span class="tech-tag">Supabase</span>
+                    <span class="tech-tag">BigQuery</span>
+                    <span class="tech-tag">Cloud Run</span>
+                </div>
+                <div class="project-meta">
+                    <span>189 bowlers · 2,329 scores · 5 leagues</span>
+                    <span>$100-500/mo</span>
+                </div>
+            </a>
+
+            <a class="project-card" href="https://github.com/SuperHerosExist/Guardian" target="_blank">
+                <div class="project-header">
+                    <div class="project-icon">🌿</div>
+                    <span class="project-status status-live">LIVE</span>
+                </div>
+                <div class="project-name">Guardian</div>
+                <div class="project-desc">QR membership system for The Treehouse Lounge. Digital membership cards, scanner check-in, liability forms, and event ticketing.</div>
+                <div class="project-tech">
+                    <span class="tech-tag">Next.js</span>
+                    <span class="tech-tag">Firebase</span>
+                    <span class="tech-tag">Zustand</span>
+                    <span class="tech-tag">JWT</span>
+                </div>
+                <div class="project-meta">
+                    <span>Cannabis lounge · Springfield, MO</span>
+                    <span>3 tiers</span>
+                </div>
+            </a>
+
+            <a class="project-card" href="https://github.com/SuperHerosExist/coachesCorner" target="_blank">
+                <div class="project-header">
+                    <div class="project-icon">🧠</div>
+                    <span class="project-status status-active">ACTIVE</span>
+                </div>
+                <div class="project-name">Coaches Corner</div>
+                <div class="project-desc">AI-powered post generator for bowling coaches. Creates engaging tips, drills, and motivational content using Google Gemini.</div>
+                <div class="project-tech">
+                    <span class="tech-tag">Vite</span>
+                    <span class="tech-tag">React</span>
+                    <span class="tech-tag">Gemini AI</span>
+                    <span class="tech-tag">Firebase</span>
+                </div>
+                <div class="project-meta">
+                    <span>9 post types · USBC resources</span>
+                    <span>AI-powered</span>
+                </div>
+            </a>
+
+            <a class="project-card" href="https://github.com/SuperHerosExist/core-stats" target="_blank">
+                <div class="project-header">
+                    <div class="project-icon">🏆</div>
+                    <span class="project-status status-active">ACTIVE</span>
+                </div>
+                <div class="project-name">Core Stats</div>
+                <div class="project-desc">Fantasy bowling league platform. Draft real bowlers, compete weekly using live LeagueSecretary data. Full draft system and scoring.</div>
+                <div class="project-tech">
+                    <span class="tech-tag">Vite</span>
+                    <span class="tech-tag">Express</span>
+                    <span class="tech-tag">Supabase</span>
+                    <span class="tech-tag">Socket.io</span>
+                </div>
+                <div class="project-meta">
+                    <span>Fantasy league · Live scoring</span>
+                    <span>by David Collins</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="section-title">Tech Stack</div>
+        <div class="stack-grid">
+            <div class="stack-category">
+                <h3>⚡ Core</h3>
+                <div class="stack-items">
+                    <span class="stack-item">TypeScript</span>
+                    <span class="stack-item">React</span>
+                    <span class="stack-item">Next.js</span>
+                    <span class="stack-item">Vite</span>
+                    <span class="stack-item">Express</span>
+                    <span class="stack-item">Node.js</span>
+                </div>
+            </div>
+            <div class="stack-category">
+                <h3>☁️ Cloud</h3>
+                <div class="stack-items">
+                    <span class="stack-item">GCP</span>
+                    <span class="stack-item">Cloud Run</span>
+                    <span class="stack-item">BigQuery</span>
+                    <span class="stack-item">Firebase</span>
+                    <span class="stack-item">Supabase</span>
+                </div>
+            </div>
+            <div class="stack-category">
+                <h3>🎨 Frontend</h3>
+                <div class="stack-items">
+                    <span class="stack-item">Tailwind CSS</span>
+                    <span class="stack-item">Recharts</span>
+                    <span class="stack-item">Framer Motion</span>
+                    <span class="stack-item">Radix UI</span>
+                    <span class="stack-item">Zustand</span>
+                </div>
+            </div>
+            <div class="stack-category">
+                <h3>🤖 AI</h3>
+                <div class="stack-items">
+                    <span class="stack-item">Google Gemini</span>
+                    <span class="stack-item">OpenClaw (Kevin)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">All Repos</div>
+        <div class="stack-grid" style="margin-bottom: 2rem;">
+            <div class="stack-category">
+                <h3>🎳 Bowling Ecosystem</h3>
+                <div class="stack-items">
+                    <span class="stack-item">bowling-intelligence</span>
+                    <span class="stack-item">core-stats</span>
+                    <span class="stack-item">coachesCorner</span>
+                    <span class="stack-item">fantasyBowling</span>
+                    <span class="stack-item">Brackets</span>
+                    <span class="stack-item">Bracket-Generator</span>
+                    <span class="stack-item">Skills</span>
+                    <span class="stack-item">Stats</span>
+                    <span class="stack-item">BowlingwithFriends</span>
+                    <span class="stack-item">whs</span>
+                </div>
+            </div>
+            <div class="stack-category">
+                <h3>🛠️ Other Projects</h3>
+                <div class="stack-items">
+                    <span class="stack-item">Guardian</span>
+                    <span class="stack-item">Remix</span>
+                    <span class="stack-item">arbitrage</span>
+                    <span class="stack-item">ris</span>
+                    <span class="stack-item">apiScanner</span>
+                    <span class="stack-item">command-center</span>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div>Command Center v1.0 · Built by Kevin 🫡 · <span class="clock" id="clock"></span></div>
+            <div class="bernie">"I ain't scared of none of y'all" — Kevin (via Bernie Mac)</div>
+        </footer>
+    </div>
+
+    <script>
+        // Live clock
+        function updateClock() {
+            const now = new Date();
+            const opts = { timeZone: 'America/Chicago', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+            document.getElementById('clock').textContent = now.toLocaleString('en-US', opts) + ' CST';
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Days since boot (Feb 13, 2026)
+        const bootDate = new Date('2026-02-13T00:00:00-06:00');
+        const today = new Date();
+        const days = Math.floor((today - bootDate) / (1000 * 60 * 60 * 24));
+        document.getElementById('uptime').textContent = Math.max(1, days);
+    </script>
+</body>
+</html>
